@@ -20,9 +20,10 @@ question
 
 ## Start here
 
-**[`DECISIONS.html`](DECISIONS.html)** — the 16 architecture decisions, each with the
-reasoning, the alternatives rejected and why, and the strongest objection to each.
-Open it in a browser.
+**[`SOLUTION_BRIEF.html`](SOLUTION_BRIEF.html)** — the whole solution in two pages:
+architecture diagram, the four assignment questions answered, what is shared vs per
+client, security, and the rollout. Open it in a browser; it prints cleanly to two A4
+pages.
 
 ## Running it
 
