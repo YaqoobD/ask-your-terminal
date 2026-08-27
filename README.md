@@ -2,7 +2,7 @@
 
 Plain-English questions over messy multi-terminal data, built as a repeatable product.
 
-Submission for the **All Your BI — Lead AI Engineer** assignment, **Scenario 2**.
+Submission for the **All Your BI Lead AI Engineer** assignment, **Scenario 2**.
 
 **The architecture in one sentence: the LLM picks; it never computes.** It maps language
 onto a governed, schema-validated `QueryIntent`. Every number, filter, trust grade and
@@ -20,14 +20,15 @@ question
 
 ## Start here
 
-**[`SOLUTION_BRIEF.html`](SOLUTION_BRIEF.html)** — the whole solution in two pages:
-architecture diagram, the four assignment questions answered, what is shared vs per
-client, security, and the rollout. Open it in a browser; it prints cleanly to two A4
-pages.
+**[`SOLUTION_BRIEF.html`](SOLUTION_BRIEF.html)** gives the whole solution in two pages:
+the architecture diagram, the four assignment questions answered, what is shared across
+clients versus configured per client, security, and the rollout. Open it in a browser; it
+prints cleanly to two A4 pages.
 
 ## Running it
 
-*Not yet buildable — the build is in progress. This section is filled in as phases land.*
+*Not yet buildable, because the build is in progress. This section is filled in as phases
+land.*
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
@@ -58,16 +59,16 @@ quality degradation.
 
 | Use | Model | Why |
 |---|---|---|
-| Intent extraction | Claude Opus 5 | the one unrecoverable step — a wrong intent produces a confidently wrong number |
+| Intent extraction | Claude Opus 5 | the one unrecoverable step, because a wrong intent produces a confidently wrong number |
 | Narration, clarifying questions | Claude Sonnet 5 | bounded rewriting over evidence produced in code |
 | Reproducibility fallback | local via Ollama | so this repo runs without a Claude key; degraded, and labelled as such |
 
 ## Honest boundaries
 
-- The data is **synthetic**. It proves the logic, not the fit to any real terminal.
-  The mess is seeded deliberately — late-arriving corrections, soft-deletes with
-  reversals, divergent berth naming per terminal, a timezone offset, a planted dwell-time
-  spike, and a prompt-injection string in a remark field.
+- The data is **synthetic**. It proves the logic, not the fit to any real terminal. The
+  mess is seeded deliberately: late-arriving corrections, soft-deletes with reversals,
+  divergent berth naming per terminal, a timezone offset, a planted dwell-time spike, and
+  a prompt-injection string in a remark field.
 - The Power BI TMDL sync is parsed from a **sample export**, because Power BI Desktop is
   Windows-only and this was built on macOS. The parser is real; the tenant connection is
-  not demonstrated. A laptop limitation, not an architectural one.
+  not demonstrated. That is a laptop limitation, not an architectural one.

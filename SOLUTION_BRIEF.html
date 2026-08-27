@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ask Your Terminal — Solution Brief</title>
+<title>Ask Your Terminal · Solution Brief</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -90,8 +90,8 @@ footer b{color:var(--dark)}
   <div class="mast">
     <p class="kick">All Your BI · Lead AI Engineer · Scenario 2 · Solution Brief</p>
     <h1>Ask your terminal data.<br><em>And be able to act on the answer.</em></h1>
-    <p>A governed question-answering layer over messy multi-terminal data — built as a
-      repeatable product, not a one-off. Two pages. Detail in the repo.</p>
+    <p>A governed question-answering layer over messy multi-terminal data, built as a
+      repeatable product rather than a one-off. Two pages. Detail in the repo.</p>
   </div>
 
   <div class="hero-line">
@@ -104,46 +104,46 @@ footer b{color:var(--dark)}
 <pre>  "which berths had the worst crane idle time last month?"
         │
         ▼
-  ┌─ <b>SCOPE</b> ─────────────────────────────────────────────────────────┐
+  ┌─ <b>SCOPE</b> ────────────────────────────────────────────────────────────┐
   │  Is this answerable? Which client? <i>Client identity comes from the</i>  │
-  │  <i>authenticated session — never from the wording of the question.</i>   │
+  │  <i>authenticated session, never from the wording of the question.</i>    │
   └────────────────────────────────────────────────────────────────────┘
         │
         ▼
-  ┌─ <b>LLM  →  QueryIntent</b> ── the model's only job ────────────────────┐
-  │    { op: aggregate,  metric: crane_idle_time_pct,                   │
-  │      grain: berth,   time: last_complete_month,                     │
-  │      sort: desc,     limit: 5 }                                     │
+  ┌─ <b>LLM  →  QueryIntent</b> ── the model's only job ──────────────────────┐
+  │    { op: aggregate,  metric: crane_idle_time_pct,                  │
+  │      grain: berth,   time: last_complete_month,                    │
+  │      sort: desc,     limit: 5 }                                    │
   │  <i>Schema-validated. Every field enum-bound to the metric registry,</i>  │
-  │  <i>so an unknown metric cannot be named — only picked. Ambiguous?</i>   │
-  │  <i>It asks one question back. No basis? It refuses.</i>                 │
+  │  <i>so an unknown metric cannot be named, only picked. Ambiguous?</i>     │
+  │  <i>It asks one question back. No basis? It refuses.</i>                  │
   └────────────────────────────────────────────────────────────────────┘
         │
         ▼
-  ┌─ <b>METRIC REGISTRY</b> ── one governed definition per metric ──────────┐
-  │  Canonical semantics, shared across all clients.                    │
+  ┌─ <b>METRIC REGISTRY</b> ── one governed definition per metric ────────────┐
+  │  Canonical semantics, shared across all clients.                   │
   │  Generated read-only from the client's <b>Power BI semantic model</b>     │
-  │  (XMLA / TMDL), so the answer equals the dashboard by construction.  │
-  │  Per client: a thin ~200-line mapping only. Never a new definition.  │
+  │  (XMLA / TMDL), so the answer equals the dashboard by construction.│
+  │  Per client: a thin ~200-line mapping only. Never a new definition.│
   └────────────────────────────────────────────────────────────────────┘
         │
         ▼
-  ┌─ <b>DETERMINISTIC SQL COMPILER</b> ── not promptable ───────────────────┐
-  │  soft-delete exclusion · as-of pinning on knowledge_time             │
-  │  timezone normalisation · berth alias resolution · lineage capture   │
+  ┌─ <b>DETERMINISTIC SQL COMPILER</b> ── not promptable ─────────────────────┐
+  │  soft-delete exclusion · as-of pinning on knowledge_time           │
+  │  timezone normalisation · berth alias resolution · lineage capture │
   └────────────────────────────────────────────────────────────────────┘
         │
         ▼
      <b>WAREHOUSE</b>  (Data Vault → marts)   <i>read-only, user's own RLS applies</i>
         │
         ▼
-  ┌─ <b>GRADED ANSWER CARD</b> ─────────────────────────────────────────────┐
+  ┌─ <b>GRADED ANSWER CARD</b> ───────────────────────────────────────────────┐
   │  <u>B3, 11.4%</u>                                    ● <b>CERTIFIED</b>          │
-  │  definition   crane_idle_time_pct v2 (from Power BI)                 │
-  │  as of        2024-04-02 06:10                                      │
-  │  restated     yes — was 12.1%; 9 late gate events + 2 reversals      │
-  │  excluded     31 soft-deleted rows                                  │
-  │  completeness 98.7% of expected moves present                       │
+  │  definition   crane_idle_time_pct v2 (from Power BI)               │
+  │  as of        2024-04-02 06:10                                     │
+  │  restated     yes, was 12.1%; 9 late gate events + 2 reversals     │
+  │  excluded     31 soft-deleted rows                                 │
+  │  completeness 98.7% of expected moves present                      │
   └────────────────────────────────────────────────────────────────────┘</pre>
 
   <div class="two">
@@ -153,7 +153,7 @@ footer b{color:var(--dark)}
         <li>Turns language into a governed <strong>intent</strong></li>
         <li>Asks <strong>one</strong> clarifying question when the ask is ambiguous</li>
         <li>Narrates evidence it did not produce</li>
-        <li><strong>Drafts the per-client mapping at onboarding</strong> — the
+        <li><strong>Drafts the per-client mapping at onboarding</strong>, the
           highest-leverage use, because a human reviews it</li>
       </ul>
     </div>
@@ -164,13 +164,13 @@ footer b{color:var(--dark)}
         <li>Soft-delete and correction filtering</li>
         <li>Access control and tenancy</li>
         <li>Its own trust grade · causal conclusions · forecasts</li>
-        <li>Any write path — the system is read-only</li>
+        <li>Any write path, because the system is read-only</li>
       </ul>
     </div>
   </div>
 
   <footer>
-    <div><b>Ask Your Terminal</b> — solution brief · the LLM picks, it never computes</div>
+    <div><b>Ask Your Terminal</b> · solution brief · the LLM picks, it never computes</div>
     <div class="pnum">1 / 2</div>
   </footer>
 </section>
@@ -189,7 +189,7 @@ footer b{color:var(--dark)}
         same SQL → same number. That is <span class="q">"the same question always gets the
         same answer"</span> turned into a mechanism instead of a promise.</p>
       <p>Messiness is solved in the <strong>model, not the agent</strong>. Two clocks
-        everywhere: <code>event_time</code> (what happened in the yard) and
+        everywhere: <code>event_time</code> for what happened in the yard, and
         <code>knowledge_time</code> (when the warehouse learned it). Any past answer
         replays exactly. When a number changes, the card says so and why.</p>
     </div>
@@ -201,20 +201,21 @@ footer b{color:var(--dark)}
         <span class="b c">● CERTIFIED</span><span class="b q">● QUALIFIED</span>
         <span class="b k">● CLARIFY</span><span class="b r">● REFUSE</span>
       </div>
-      <p>Every answer carries a grade computed by <strong>deterministic checks</strong> —
-        registry coverage, freshness against SLA, completeness, whether the window has
+      <p>Every answer carries a grade computed by <strong>deterministic checks</strong>:
+        registry coverage, freshness against SLA, completeness, and whether the window has
         settled. Never model self-assessment, which cannot be calibrated or defended.</p>
       <p>Certified answers are cleared for operational decisions. Qualified ones name their
         limitation. Ambiguous questions get exactly one question back. Where there is no
-        basis, the system <strong>refuses and says what it would need</strong> — and each
+        basis, the system <strong>refuses and says what it would need</strong>, and each
         refusal is logged as a metric request, so limitations become roadmap.</p>
     </div>
 
     <div class="blk">
       <p class="qn">Question 3</p>
       <h3>Affordable and fast, many clients</h3>
-      <p>Canonical intents are what make caching possible at all — two differently-worded
-        questions collapse to one key, which free-form SQL can never safely do.</p>
+      <p>Canonical intents are what make caching possible at all, because two
+        differently-worded questions collapse to one key. Free-form SQL cannot safely
+        do that.</p>
       <p>Four tiers: certified <strong>answer cache</strong> keyed on
         <code>intent + client + knowledge-time watermark</code>, so corrections landing
         invalidate exactly the affected answers and nothing else; <strong>intent
@@ -229,8 +230,8 @@ footer b{color:var(--dark)}
       <h3>Genuinely useful, not a demo</h3>
       <p><strong>Measure the baseline before building.</strong> One week shadowing two
         planners and an ops manager: every question, who they asked, how long it took
-        today. That single log becomes the build backlog, the test set and the baseline —
-        without it, "hours saved" is a number you invented.</p>
+        today. That single log becomes the build backlog, the test set and the baseline.
+        Without it, "hours saved" is a number you invented.</p>
       <p>Then report in AYBI's own unit: <strong>hours returned per week</strong>, share of
         questions answered without raising a BI ticket, and one tap on <em>"did this change
         what you did?"</em> The honest demo-ware test is week-6 weekly-active askers
@@ -238,16 +239,16 @@ footer b{color:var(--dark)}
     </div>
   </div>
 
-  <h2>Repeatable across clients — what is shared, what is per client</h2>
+  <h2>Repeatable across clients: what is shared, what is per client</h2>
   <table>
-    <tr><th style="width:26%">Shared — the product</th><th style="width:30%">Per client — config, human-signed</th><th>How onboarding runs</th></tr>
+    <tr><th style="width:26%">Shared, the product</th><th style="width:30%">Per client, config, human-signed</th><th>How onboarding runs</th></tr>
     <tr>
       <td>canonical metric ontology<br>intent schema<br>SQL compiler<br>diagnose routines<br>eval harness<br>answer-card UI</td>
       <td><code>mapping.yml</code> (~200 lines)<br>berth naming &amp; aliases<br>soft-delete flag, timezone<br>freshness SLAs<br>declared signals<br>gold Q&amp;A set (client-signed)</td>
       <td><strong>1.</strong> An LLM reads the client's schema, sample rows and legacy report SQL.<br>
         <strong>2.</strong> It drafts <code>mapping.yml</code>, flagging every ambiguity as an explicit question.<br>
         <strong>3.</strong> A BI engineer reviews, corrects and signs off. <strong>This gate is mandatory.</strong><br>
-        <strong>4.</strong> The client-signed gold set runs green — then the client sees it.<br>
+        <strong>4.</strong> The client-signed gold set runs green, then the client sees it.<br>
         <em>Wrong here, a human catches it. Wrong at runtime, a client makes a bad call.</em></td>
     </tr>
   </table>
@@ -256,12 +257,12 @@ footer b{color:var(--dark)}
     <div>
       <h2>Security, raised unprompted</h2>
       <ul>
-        <li><strong>Tenant from the authenticated session</strong>, never from the question —
-          asking for another terminal is a refusal, not a permission check that might pass</li>
+        <li><strong>Tenant from the authenticated session</strong>, never from the question.
+          Asking for another terminal is a refusal, not a permission check that might pass</li>
         <li><strong>Row-level security inherited</strong> from the existing Power BI model,
           not rebuilt</li>
         <li>Registry and intent are instructions; <strong>data values are evidence,
-          never instructions</strong> — vessel names and berth remarks are
+          never instructions</strong>, because vessel names and berth remarks are
           attacker-controlled text</li>
         <li>EU-region endpoints, no training, no retention; a local open-source path for
           clients who will not use a US vendor</li>
@@ -273,31 +274,32 @@ footer b{color:var(--dark)}
       <p>Five eval layers. Four of them involve no model at all, so the gate is credible:
         intent exact-diff · golden SQL snapshots · end-to-end against known truth ·
         <strong>a must-refuse trap suite</strong> · narration faithfulness.</p>
-      <p><strong>Layers 1–4 gate every prompt, model and registry change.</strong> Most
+      <p><strong>Layers 1 to 4 gate every prompt, model and registry change.</strong> Most
         teams test happy paths; testing that the system correctly declines is what turns
         refusal from a hope into a guarantee.</p>
       <h2 style="margin-top:4mm">Honest boundaries</h2>
       <p>The demo runs on <strong>synthetic</strong> terminal data with deliberately seeded
         mess. It proves the logic, not the fit to any real terminal. The Power BI sync is
-        parsed from a sample TMDL export — Power BI Desktop is Windows-only and this was
-        built on macOS. That is a laptop limitation, not an architectural one.</p>
+        parsed from a sample TMDL export, because Power BI Desktop is Windows-only and this
+        was built on macOS. That is a laptop limitation, not an architectural one.</p>
     </div>
   </div>
 
   <div class="callout">
-    <p><strong>Rollout — every gate is a number, nothing advances on enthusiasm.</strong>
-      <strong>Wk 0</strong> shadow planners → baseline. <strong>Wk 1–3</strong> registry,
-      compiler, evals — one metric family, one terminal. <strong>Wk 3–5</strong> AYBI
-      engineers dogfood it; exit when they prefer it to the dashboard.
-      <strong>Wk 5–9</strong> client pilot with a human reviewing every answer — this is
-      how the trust thresholds get calibrated rather than guessed.
-      <strong>Wk 9–12</strong> reviewer removed for the certified lane only; second client
-      onboarded, and the exit KPI is <strong>onboarding days</strong>, not accuracy. If
-      client two takes as long as client one, it is not a product yet — and we would say so.</p>
+    <p><strong>Rollout, where every gate is a number and nothing advances on
+      enthusiasm.</strong> <strong>Wk 0</strong> shadow planners → baseline.
+      <strong>Wk 1 to 3</strong> registry, compiler, evals, on one metric family and one
+      terminal. <strong>Wk 3 to 5</strong> AYBI engineers dogfood it; exit when they prefer
+      it to the dashboard. <strong>Wk 5 to 9</strong> client pilot with a human reviewing
+      every answer, which is how the trust thresholds get calibrated rather than guessed.
+      <strong>Wk 9 to 12</strong> reviewer removed for the certified lane only; second
+      client onboarded, and the exit KPI is <strong>onboarding days</strong>, not accuracy.
+      If client two takes as long as client one, it is not a product yet, and we would
+      say so.</p>
   </div>
 
   <footer>
-    <div><b>Full architecture decision log, runnable demo and eval scoreboard in the repository.</b><br>
+    <div><b>Runnable demo, eval scoreboard and full source in the repository.</b><br>
       Synthetic data · runs on any laptop · no cloud account required</div>
     <div class="pnum">2 / 2</div>
   </footer>
