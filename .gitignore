@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+*.duckdb
+runs.jsonl
+.DS_Store
