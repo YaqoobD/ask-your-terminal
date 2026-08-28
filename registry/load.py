@@ -70,6 +70,9 @@ def resolve_from_dicts(canonical: dict, client: dict, con: duckdb.DuckDBPyConnec
             continue
         if signal["table"] not in schema:
             raise RegistryError(f"canonical signal '{name}': table '{signal['table']}' does not exist")
+        for column in (signal.get("time_column"), signal.get("knowledge_time_column")):
+            if column is not None:
+                _require_column(schema, signal["table"], column, f"canonical signal '{name}'")
 
     for table, column in client.get("soft_delete_columns", {}).items():
         _require_column(schema, table, column, f"client '{client['client_id']}' soft_delete_columns")

@@ -9,29 +9,57 @@
 # evaluated per row before `agg` is applied. The full compiled query (joins,
 # soft-delete exclusion, as-of pinning, the tenant predicate) is Phase 3's
 # job; this file only fixes what each signal means and where it comes from.
+# dimensions: how to get from a dimension name (as named in a metric's
+# allowed_dimensions) to a SQL column on a given signal's base table. Most
+# dimensions are native columns; a couple aren't present on every signal table
+# and need either a derived expression or a join, so the resolution rule lives
+# here once instead of being reinvented per metric in the compiler.
+dimensions:
+  terminal:
+    column: terminal
+  is_reefer:
+    column: is_reefer
+  equipment_type:
+    expr: "split_part(equipment_id, '-', 1)"
+  berth:
+    join:
+      table: berth_allocations
+      "on": call_id
+      column: berth
+
 signals:
   dwell_hours_sum:
     table: container_events
     expr: "date_diff('hour', gate_in, gate_out)"
     agg: sum
     soft_delete_flag: deleted
+    time_column: gate_in
+    knowledge_time_column: gate_out_knowledge_time
   container_count:
     table: container_events
     expr: container_id
     agg: count
     soft_delete_flag: deleted
+    time_column: gate_in
+    knowledge_time_column: gate_out_knowledge_time
   downtime_hours_sum:
     table: equipment_downtime
     expr: duration_hours
     agg: sum
+    time_column: event_time
+    knowledge_time_column: knowledge_time
   equipment_count:
     table: equipment_downtime
     expr: equipment_id
     agg: count_distinct
+    time_column: event_time
+    knowledge_time_column: knowledge_time
   crane_move_count:
     table: crane_moves
     expr: move_id
     agg: count
+    time_column: event_time
+    knowledge_time_column: knowledge_time
   gate_turnaround_hours_sum:
     table: gate_moves
     expr: >-
@@ -43,11 +71,15 @@ signals:
       )
     agg: sum
     filter: "direction = 'out'"
+    time_column: event_time
+    knowledge_time_column: knowledge_time
   gate_event_count:
     table: gate_moves
     expr: container_id
     agg: count_distinct
     filter: "direction = 'out'"
+    time_column: event_time
+    knowledge_time_column: knowledge_time
   window_hours:
     # Virtual: the calendar hours in the query's time_window, supplied by the
     # Phase 3 compiler from time_window, not read off any table.
