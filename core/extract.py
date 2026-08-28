@@ -106,8 +106,11 @@ def extract(question: str, registry, *, provider: Provider | None = None) -> Ext
     if "clarify" in parsed:
         return ExtractResult(clarify=parsed["clarify"])
 
+    if "refuse" in parsed:
+        return ExtractResult(refusal=Refusal(reason=parsed["refuse"], source="model"))
+
     if "intent" not in parsed:
-        raise ExtractError(f"provider response had neither 'intent' nor 'clarify': {parsed!r}")
+        raise ExtractError(f"provider response had neither 'intent', 'clarify' nor 'refuse': {parsed!r}")
 
     _stringify_filters(parsed["intent"])
     try:

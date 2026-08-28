@@ -7,7 +7,7 @@ demo:
 	.venv/bin/uvicorn api.main:app --reload
 
 evals:
-	.venv/bin/python -m pytest evals -q
+	PYTHONPATH=. .venv/bin/python evals/run_evals.py
 
 test:
 	.venv/bin/python -m pytest tests -q
