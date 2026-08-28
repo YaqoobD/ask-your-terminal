@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ask Your Terminal: Admin</title>
+<link rel="stylesheet" href="/static/app.css?v=13">
+<style>
+  body { align-items: stretch; }
+  .admin-wrap {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 28px 40px 60px;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .tabs { display: flex; gap: 8px; }
+  .tab {
+    font-family: inherit; font-size: 0.9rem; font-weight: 700;
+    padding: 10px 20px; border-radius: 20px; border: 1px solid #c6c9de;
+    background: var(--white); color: var(--ink); cursor: pointer;
+  }
+  .tab.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+  .panel { background: var(--white); border-radius: 12px; padding: 20px 24px; box-shadow: 0 2px 10px rgba(16, 5, 47, 0.06); }
+  .panel h2 { margin: 0 0 14px; font-size: 1.05rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+  .stat { background: var(--g1); border-radius: 10px; padding: 14px 16px; }
+  .stat .n { font-family: 'IBM Plex Mono', monospace; font-size: 1.5rem; font-weight: 700; }
+  .stat .l { font-size: 0.72rem; color: var(--g3); text-transform: uppercase; letter-spacing: 0.03em; margin-top: 2px; }
+  table.rows td, table.rows th { font-size: 0.82rem; }
+  pre.report { background: var(--ink); color: var(--paper); font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; padding: 16px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; max-height: 420px; }
+  .page-title { font-size: 1.3rem; margin: 0; }
+  .prompt-note { font-size: 0.82rem; color: var(--g3); margin: 0 0 12px; line-height: 1.5; }
+  textarea.prompt-editor {
+    width: 100%; min-height: 320px; font-family: 'IBM Plex Mono', monospace; font-size: 0.82rem;
+    line-height: 1.5; padding: 14px; border-radius: 8px; border: 1px solid #c6c9de;
+    background: var(--g1); color: var(--ink); resize: vertical;
+  }
+  .prompt-actions { display: flex; gap: 10px; align-items: center; margin-top: 12px; }
+  .prompt-actions button {
+    font-family: inherit; font-weight: 700; font-size: 0.85rem; padding: 10px 20px;
+    border-radius: 20px; border: none; background: var(--ink); color: var(--white); cursor: pointer;
+  }
+  .prompt-actions button.secondary { background: var(--paper); color: var(--ink); border: 1px solid #c6c9de; }
+  .prompt-status { font-size: 0.82rem; color: var(--g3); }
+  .prompt-status.saved { color: var(--certified); }
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="logo-dot"></span>Ask Your Terminal: Admin</h1>
+  <a class="nav-link" href="/">&larr; back to app</a>
+</header>
+
+<div class="admin-wrap">
+  <div class="tabs">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="prompts">Prompts</button>
+  </div>
+
+  <div id="tab-overview"></div>
+  <div id="tab-prompts" style="display:none;"></div>
+</div>
+
+<script>
+function stat(label, value) {
+  return `<div class="stat"><div class="n">${value}</div><div class="l">${label}</div></div>`;
+}
+function fmtUsd(n) { return "$" + (n ?? 0).toFixed(4); }
+function escapeHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function recentTable(rows) {
+  if (!rows.length) return `<p class="empty">no answers logged yet, ask something first</p>`;
+  const head = ["ts", "tenant", "grade", "metric", "window", "cache", "cost", "sanitizer"];
+  const body = rows.map(r => `<tr>
+    <td>${r.ts.slice(11, 19)}</td>
+    <td>${r.tenant_id}</td>
+    <td><span class="badge badge-${r.grade}">${r.grade}</span></td>
+    <td>${r.metric ?? "-"}</td>
+    <td>${r.time_window ?? "-"}</td>
+    <td>${r.cache_tier ?? "-"}</td>
+    <td>${fmtUsd(r.cost_usd)}</td>
+    <td>${r.sanitizer_verdict ?? "-"}</td>
+  </tr>`).join("");
+  return `<table class="rows"><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table>`;
+}
+
+async function renderOverview() {
+  const data = await fetch("/admin/summary").then(r => r.json());
+  const p = data.provider, u = data.utility, o = data.operations;
+
+  document.getElementById("tab-overview").innerHTML = `
+    <div class="panel">
+      <h2>Model &amp; prompt</h2>
+      <div class="grid">
+        ${stat("provider backend", p.backend)}
+        ${stat("intent model", p.intent_model)}
+        ${stat("narrate model", p.narrate_model)}
+        ${stat("prompt version", p.prompt_version)}
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Cost &amp; volume</h2>
+      <div class="grid">
+        ${stat("total answers", o.total_answers)}
+        ${stat("total cost", fmtUsd(o.total_cost_usd))}
+        ${stat("avg cost / answer", fmtUsd(o.total_answers ? o.total_cost_usd / o.total_answers : 0))}
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Latency by stage (avg ms)</h2>
+      <div class="grid">
+        ${Object.entries(o.avg_latency_ms).map(([stage, ms]) => stat(stage, ms)).join("") || "<p class=\"empty\">no answers logged yet</p>"}
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Grades &amp; cache</h2>
+      <div class="grid">
+        ${Object.entries(o.grade_counts).map(([g, n]) => stat(g, n)).join("")}
+        ${Object.entries(o.cache_tier_counts).map(([t, n]) => stat("cache " + t, n)).join("")}
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Utility (flag rate, export rate, active askers)</h2>
+      <div class="grid">
+        ${Object.entries(u.flag_rate_per_grade).map(([g, r]) => stat("flag rate " + g, (r * 100).toFixed(0) + "%")).join("")}
+        ${stat("export rate", (u.export_rate * 100).toFixed(0) + "%")}
+        ${stat("certified w/o clarify", (u.certified_without_clarify_share * 100).toFixed(0) + "%")}
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Latest eval gate</h2>
+      <pre class="report">${data.eval_report ? escapeHtml(data.eval_report) : "no evals/report.md found; run make evals"}</pre>
+    </div>
+
+    <div class="panel">
+      <h2>Recent answers</h2>
+      ${recentTable(o.recent)}
+    </div>
+  `;
+}
+
+async function renderPrompts() {
+  const prompts = await fetch("/admin/prompts").then(r => r.json());
+  const container = document.getElementById("tab-prompts");
+  container.innerHTML = Object.entries(prompts).map(([name, p]) => `
+    <div class="panel">
+      <h2>${name}</h2>
+      <p class="prompt-note">${escapeHtml(p.note)}</p>
+      <textarea class="prompt-editor" id="editor-${name}">${escapeHtml(p.content)}</textarea>
+      <div class="prompt-actions">
+        <button data-save="${name}">Save</button>
+        <button class="secondary" data-reset="${name}">Revert to saved</button>
+        <span class="prompt-status" id="status-${name}"></span>
+      </div>
+    </div>
+  `).join("");
+
+  container.querySelectorAll("[data-save]").forEach(btn => {
+    btn.onclick = async () => {
+      const name = btn.dataset.save;
+      const content = document.getElementById(`editor-${name}`).value;
+      const status = document.getElementById(`status-${name}`);
+      status.textContent = "saving...";
+      status.className = "prompt-status";
+      const res = await fetch(`/admin/prompts/${name}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+      if (res.ok) {
+        status.textContent = "saved, live on the next call";
+        status.className = "prompt-status saved";
+      } else {
+        status.textContent = "save failed";
+      }
+    };
+  });
+  container.querySelectorAll("[data-reset]").forEach(btn => {
+    btn.onclick = () => renderPrompts();
+  });
+}
+
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    const which = tab.dataset.tab;
+    document.getElementById("tab-overview").style.display = which === "overview" ? "" : "none";
+    document.getElementById("tab-prompts").style.display = which === "prompts" ? "" : "none";
+  };
+});
+
+renderOverview();
+renderPrompts();
+</script>
+</body>
+</html>
