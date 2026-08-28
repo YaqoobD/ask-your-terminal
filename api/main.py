@@ -9,6 +9,7 @@ records through core.telemetry, unchanged. GET /health is a liveness probe.
 
 from __future__ import annotations
 
+import time
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -25,6 +26,7 @@ from core.diagnose import diagnose
 from core.extract import extract
 from core.grade import Grade, GradeInputs, Refusal, grade
 from core.narrate import NarrationError, narrate
+from core.providers import estimate_cost_usd, get_provider
 from core.telemetry import record_answer, record_interaction
 from core.tenancy import Session, UnknownSessionError, log_cross_tenant_attempt, resolve_tenant
 from core.timewindow import TimeWindowError, resolve_time_window
@@ -82,12 +84,19 @@ def _refuse(reason: str, source: str) -> tuple[Grade, list[str]]:
     return result.grade, result.reasons
 
 
-def _diagnose_payload(intent, tenant_id: str, registry) -> dict:
+def _diagnose_payload(intent, tenant_id: str, registry, usage_acc: dict) -> dict:
     result = diagnose(intent, tenant_id=tenant_id, registry=registry)
+    narrate_provider = get_provider("narrate")
+    t0 = time.monotonic()
     try:
-        narration = narrate(result)
+        narration = narrate(result, provider=narrate_provider)
     except NarrationError as exc:
         narration = f"(narration withheld: {exc})"
+    usage_acc["latency_ms"]["narrate"] = round((time.monotonic() - t0) * 1000)
+    u = narrate_provider.last_usage
+    if u:
+        usage_acc["tokens"]["narrate"] = u
+        usage_acc["cost_usd"] += estimate_cost_usd("narrate", u["input_tokens"], u["output_tokens"])
     return {
         "base_value": result.base_value,
         "comparison_value": result.comparison_value,
@@ -117,11 +126,21 @@ def ask(req: AskRequest) -> dict:
 
     answer_id = str(uuid.uuid4())
     registry = resolve(tenant_id)
+    usage_acc = {"tokens": {}, "cost_usd": 0.0, "latency_ms": {}}
 
     cached = intent_cache.get(req.question)
     cache_tier = "T1" if cached is not None else None
-    result = cached if cached is not None else extract(req.question, registry)
-    if cached is None:
+    if cached is not None:
+        result = cached
+    else:
+        intent_provider = get_provider("intent")
+        t0 = time.monotonic()
+        result = extract(req.question, registry, provider=intent_provider)
+        usage_acc["latency_ms"]["intent"] = round((time.monotonic() - t0) * 1000)
+        u = intent_provider.last_usage
+        if u:
+            usage_acc["tokens"]["intent"] = u
+            usage_acc["cost_usd"] += estimate_cost_usd("intent", u["input_tokens"], u["output_tokens"])
         intent_cache.set(req.question, result)
 
     payload = {"answer_id": answer_id, "question": req.question, "cache_tier": cache_tier}
@@ -185,7 +204,7 @@ def ask(req: AskRequest) -> dict:
                     lineage=cq.lineage,
                 )
                 if intent.op == "diagnose":
-                    payload["diagnose"] = _diagnose_payload(intent, tenant_id, registry)
+                    payload["diagnose"] = _diagnose_payload(intent, tenant_id, registry, usage_acc)
             finally:
                 con.close()
 
@@ -201,9 +220,9 @@ def ask(req: AskRequest) -> dict:
         params=payload.get("params", []),
         prompt_version="intent_v1",
         sanitizer_verdict="block" if (result.refusal and result.refusal.source == "sanitize") else "pass",
-        tokens={},
-        cost_usd=0.0,
-        latency_ms={},
+        tokens=usage_acc["tokens"],
+        cost_usd=usage_acc["cost_usd"],
+        latency_ms=usage_acc["latency_ms"],
         cache_tier=cache_tier,
         asker_id=req.asker_id,
         via_clarify=False,

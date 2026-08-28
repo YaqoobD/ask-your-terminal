@@ -15,8 +15,27 @@ INTENT_MODEL = "claude-opus-5"
 NARRATE_MODEL = "claude-sonnet-5"
 OLLAMA_MODEL = os.environ.get("ASK_OLLAMA_MODEL", "llama3")
 
+# USD per 1M tokens (input, output), Anthropic first-party API rates as of 2026-06-24.
+# Claude on Bedrock is partner-priced separately, so a Bedrock-backed run's cost here is
+# an estimate against these rates, not an actual bill. Ollama is local: always $0 below,
+# regardless of token counts, because there is no per-token API charge to estimate.
+PRICING_USD_PER_MTOK = {
+    INTENT_MODEL: (5.00, 25.00),
+    NARRATE_MODEL: (2.00, 10.00),
+}
+
+
+def estimate_cost_usd(role: str, input_tokens: int, output_tokens: int) -> float:
+    if os.environ.get("ASK_PROVIDER") == "ollama":
+        return 0.0
+    model = INTENT_MODEL if role == "intent" else NARRATE_MODEL
+    in_price, out_price = PRICING_USD_PER_MTOK[model]
+    return (input_tokens * in_price + output_tokens * out_price) / 1_000_000
+
 
 class Provider(Protocol):
+    last_usage: dict
+
     def complete(self, *, system: str, user: str) -> str: ...
 
 
@@ -33,6 +52,7 @@ def _first_text_block(response) -> str:
 class ClaudeProvider:
     def __init__(self, model: str):
         self.model = model
+        self.last_usage: dict = {}
 
     def complete(self, *, system: str, user: str) -> str:
         import anthropic
@@ -44,6 +64,10 @@ class ClaudeProvider:
             system=system,
             messages=[{"role": "user", "content": user}],
         )
+        self.last_usage = {
+            "input_tokens": response.usage.input_tokens,
+            "output_tokens": response.usage.output_tokens,
+        }
         return _first_text_block(response)
 
 
@@ -57,6 +81,7 @@ class BedrockProvider:
 
     def __init__(self, model: str):
         self.model = model
+        self.last_usage: dict = {}
 
     def complete(self, *, system: str, user: str) -> str:
         import anthropic
@@ -68,12 +93,17 @@ class BedrockProvider:
             system=system,
             messages=[{"role": "user", "content": user}],
         )
+        self.last_usage = {
+            "input_tokens": response.usage.input_tokens,
+            "output_tokens": response.usage.output_tokens,
+        }
         return _first_text_block(response)
 
 
 class OllamaProvider:
     def __init__(self, model: str = OLLAMA_MODEL):
         self.model = model
+        self.last_usage: dict = {}
 
     def complete(self, *, system: str, user: str) -> str:
         import httpx
@@ -91,7 +121,15 @@ class OllamaProvider:
             timeout=60,
         )
         response.raise_for_status()
-        return response.json()["message"]["content"]
+        body = response.json()
+        # Best-effort: Ollama reports these as prompt_eval_count/eval_count, not the
+        # input_tokens/output_tokens shape the Anthropic SDK uses. Local inference has
+        # no per-token API charge either way, so estimate_cost_usd() ignores these.
+        self.last_usage = {
+            "input_tokens": body.get("prompt_eval_count", 0),
+            "output_tokens": body.get("eval_count", 0),
+        }
+        return body["message"]["content"]
 
 
 def get_provider(role: str) -> Provider:
