@@ -258,7 +258,9 @@ footer b{color:var(--dark)}
       <h2>Security, raised unprompted</h2>
       <ul>
         <li><strong>Tenant from the authenticated session</strong>, never from the question.
-          Asking for another terminal is a refusal, not a permission check that might pass</li>
+          The query form has no field a tenant could occupy; the compiler takes the client's
+          identity as a required argument, not a value the model could set. Asking for
+          another terminal is a refusal, not a permission check that might pass</li>
         <li><strong>Row-level security inherited</strong> from the existing Power BI model,
           not rebuilt</li>
         <li>Registry and intent are instructions; <strong>data values are evidence,
