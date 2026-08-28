@@ -221,8 +221,8 @@ footer b{color:var(--dark)}
         invalidate exactly the affected answers and nothing else; <strong>intent
         cache</strong>, so the expensive model call happens only on genuinely novel
         phrasings; prompt cache for the registry block; precomputed aggregates on the hot
-        path. Cost is logged per <em>answered question</em> and capped per client, so the
-        spend is predictable enough to price.</p>
+        path. Cost is logged per <em>answered question</em>, real tokens and dollars, not an
+        estimate, so spend is visible enough to price and cap per client as a next step.</p>
     </div>
 
     <div class="blk">
@@ -269,8 +269,10 @@ footer b{color:var(--dark)}
           call and blocks known injection patterns outright, at zero cost because a
           blocked question never reaches the model. The exact planted injection string is
           blocked in testing, proven with a test that counts model calls, not assumed</li>
-        <li>EU-region endpoints, no training, no retention; a local open-source path for
-          clients who will not use a US vendor</li>
+        <li>The provider layer is swappable: direct API for simplicity, AWS Bedrock
+          (<code>eu-central-1</code>) when a client needs EU-region data residency, or a
+          local open-source model for clients who will not use a US vendor. The demo runs on
+          whichever is configured; that choice is per-deployment, not fixed in the code</li>
         <li>Cross-tenant probes are <strong>regression tests</strong>, not assurances</li>
       </ul>
     </div>
