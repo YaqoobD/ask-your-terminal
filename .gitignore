@@ -4,4 +4,5 @@ __pycache__/
 *.pyc
 *.duckdb
 runs.jsonl
+evals/report.md
 .DS_Store

@@ -276,9 +276,11 @@ footer b{color:var(--dark)}
     </div>
     <div>
       <h2>How it stays right</h2>
-      <p>Five eval layers. Four of them involve no model at all, so the gate is credible:
-        intent exact-diff · golden SQL snapshots · end-to-end against known truth ·
-        <strong>a must-refuse trap suite</strong> · narration faithfulness.</p>
+      <p>Five eval layers. Four are judged without a model, by exact comparison, a saved
+        SQL snapshot, or a grade assertion, so the gate is credible: intent exact-diff ·
+        golden SQL snapshots · end-to-end against known truth ·
+        <strong>a must-refuse trap suite</strong> · narration faithfulness, the one layer an
+        AI judge scores.</p>
       <p><strong>Layers 1 to 4 gate every prompt, model and registry change.</strong> Most
         teams test happy paths; testing that the system correctly declines is what turns
         refusal from a hope into a guarantee.</p>

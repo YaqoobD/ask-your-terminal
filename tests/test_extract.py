@@ -71,6 +71,16 @@ def test_injection_tail_on_an_otherwise_normal_question_refuses(registry):
     assert provider.call_count == 0
 
 
+def test_model_refuse_shape_is_carried_as_a_refusal(registry):
+    response = json.dumps({"refuse": "we don't forecast; this system only aggregates recorded history"})
+    provider = MockProvider(response)
+    result = extract("what will crane idle time be next month?", registry, provider=provider)
+    assert result.intent is None
+    assert result.clarify is None
+    assert result.refusal is not None
+    assert result.refusal.source == "model"
+
+
 def test_invalid_metric_from_provider_raises_extract_error(registry):
     from core.extract import ExtractError
 

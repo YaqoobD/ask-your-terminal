@@ -1,0 +1,5 @@
+{"question": "What was our average container dwell time last month?", "tenant": "tos_alpha", "expected": {"op": "aggregate", "metric": "dwell_time", "grain": "month", "dimensions": [], "time_window": "last_complete_month"}}
+{"question": "Break down crane idle percentage by equipment type for week 3.", "tenant": "tos_alpha", "expected": {"op": "aggregate", "metric": "crane_idle_pct", "dimensions": ["equipment_type"], "time_window": "week 3"}}
+{"question": "Why did dwell time change in week 5?", "tenant": "tos_beta", "expected": {"op": "diagnose", "metric": "dwell_time", "time_window": "week 5"}}
+{"question": "What was gate turnaround time yesterday?", "tenant": "tos_beta", "expected": {"op": "aggregate", "metric": "gate_turnaround", "grain": "day", "dimensions": [], "time_window": "yesterday"}}
+{"question": "How many crane moves per hour did we do in week 4?", "tenant": "tos_beta", "expected": {"op": "aggregate", "metric": "moves_per_hr", "dimensions": [], "time_window": "week 4"}}
