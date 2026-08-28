@@ -35,6 +35,7 @@ signals:
     soft_delete_flag: deleted
     time_column: gate_in
     knowledge_time_column: gate_out_knowledge_time
+    key_column: container_id
   container_count:
     table: container_events
     expr: container_id
@@ -42,12 +43,14 @@ signals:
     soft_delete_flag: deleted
     time_column: gate_in
     knowledge_time_column: gate_out_knowledge_time
+    key_column: container_id
   downtime_hours_sum:
     table: equipment_downtime
     expr: duration_hours
     agg: sum
     time_column: event_time
     knowledge_time_column: knowledge_time
+    key_column: downtime_id
   equipment_count:
     table: equipment_downtime
     expr: equipment_id
