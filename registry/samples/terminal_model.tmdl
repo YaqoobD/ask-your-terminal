@@ -1,0 +1,13 @@
+table 'Terminal Metrics'
+
+	measure 'Dwell Time' = AVERAGEX('Container Events', DATEDIFF([Gate In], [Gate Out], HOUR))
+		formatString: 0.0
+		description: Average hours a container spends between gate-in and gate-out.
+
+	measure 'Crane Idle %' = DIVIDE([Downtime Hours], [Equipment Count])
+		formatString: 0.0%
+		description: Share of scheduled crane hours lost to downtime, including planned maintenance.
+
+	measure 'Gate Turnaround' = AVERAGEX('Gate Moves', [Turnaround Hours])
+		formatString: 0.0
+		description: Average hours between a container's gate-in and gate-out move.
