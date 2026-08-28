@@ -26,10 +26,11 @@ def _start_of_day(dt: datetime) -> datetime:
 def resolve_time_window(spec: str | dict, *, now: datetime | None = None) -> tuple[datetime, datetime]:
     now = now or datetime.now(UTC).replace(tzinfo=None)
 
-    if isinstance(spec, dict):
+    if isinstance(spec, dict) or hasattr(spec, "start"):
+        raw = spec if isinstance(spec, dict) else {"start": spec.start, "end": spec.end}
         try:
-            start = datetime.fromisoformat(spec["start"])
-            end = datetime.fromisoformat(spec["end"])
+            start = datetime.fromisoformat(raw["start"])
+            end = datetime.fromisoformat(raw["end"])
         except (KeyError, ValueError) as exc:
             raise TimeWindowError(f"invalid explicit time_window: {spec!r}") from exc
         if end <= start:
