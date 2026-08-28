@@ -34,7 +34,7 @@ def append_jsonl(path: Path, row: dict) -> dict:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a") as f:
-        f.write(json.dumps(row) + "\n")
+        f.write(json.dumps(row, default=str) + "\n")
     return row
 
 

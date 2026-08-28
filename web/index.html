@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ask Your Terminal</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header>
+  <h1>Ask Your Terminal</h1>
+  <p>Plain-English questions over your terminal operations data, answered against a governed metric registry.</p>
+</header>
+<main>
+  <div class="ask-row">
+    <select id="client">
+      <option value="demo-alpha">TOS Alpha</option>
+      <option value="demo-beta">TOS Beta</option>
+    </select>
+    <input type="text" id="question" placeholder="Ask about dwell time, crane idle %, gate turnaround...">
+    <button id="ask">Ask</button>
+  </div>
+
+  <div class="examples" id="examples"></div>
+
+  <div id="card" class="card">
+    <p class="empty">Ask a question, or try one of the examples above.</p>
+  </div>
+</main>
+
+<script>
+const EXAMPLES = [
+  { label: "Certified", client: "demo-alpha", q: "What was our average container dwell time in week 3?" },
+  { label: "Qualified", client: "demo-alpha", q: "what was dwell time in week 7" },
+  { label: "Clarify", client: "demo-alpha", q: "best berth?" },
+  { label: "Refuse", client: "demo-alpha", q: "why is Rotterdam slow" },
+  { label: "Diagnose", client: "demo-beta", q: "Why did dwell time change in week 5?" },
+];
+
+const exampleBar = document.getElementById("examples");
+for (const ex of EXAMPLES) {
+  const btn = document.createElement("button");
+  btn.textContent = ex.label;
+  btn.onclick = () => {
+    document.getElementById("client").value = ex.client;
+    document.getElementById("question").value = ex.q;
+    ask();
+  };
+  exampleBar.appendChild(btn);
+}
+
+let lastAnswerId = null;
+
+function fireEvent(kind, extra) {
+  fetch("/event", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ answer_id: lastAnswerId, interaction_kind: kind, extra: extra || {} }),
+  });
+}
+
+function rowsTable(columns, rows) {
+  if (!rows || !rows.length) return "";
+  const head = columns.map(c => `<th>${c}</th>`).join("");
+  const body = rows.map(r => `<tr>${r.map(v => `<td>${v}</td>`).join("")}</tr>`).join("");
+  return `<table class="rows"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+}
+
+function diagnoseBlock(d) {
+  if (!d) return "";
+  let html = `<p class="meta">base: ${d.base_value.toFixed(2)} &rarr; comparison: ${d.comparison_value.toFixed(2)} (delta ${d.total_delta.toFixed(2)})</p>`;
+  html += `<p class="meta">reality check: ${d.reality_check.is_artefact ? "ARTEFACT" : "real"} &mdash; ${d.reality_check.reason}</p>`;
+  for (const dim of d.dimensions) {
+    html += `<h2>By ${dim.dimension}</h2><table class="rows"><thead><tr><th>level</th><th>delta</th><th>share</th></tr></thead><tbody>`;
+    for (const c of dim.contributions) {
+      html += `<tr><td>${c.level}</td><td>${c.numerator_delta.toFixed(2)}</td><td>${c.share !== null ? (c.share * 100).toFixed(1) + "%" : "-"}</td></tr>`;
+    }
+    html += `</tbody></table><p class="meta">unexplained remainder: ${dim.unexplained_remainder.toFixed(2)}</p>`;
+  }
+  html += `<div class="narration">${d.narration}</div>`;
+  return html;
+}
+
+function render(a) {
+  lastAnswerId = a.answer_id;
+  const card = document.getElementById("card");
+  const reasons = (a.reasons || []).map(r => `<li>${r}</li>`).join("");
+
+  let body = `<span class="badge badge-${a.grade}">${a.grade}</span>`;
+  if (a.definition) body += `<h2>${a.restatement || ""}</h2><p class="meta">${a.definition}</p>`;
+  if (a.as_of) body += `<p class="meta">as of: ${a.as_of}</p>`;
+  if (a.completeness_pct !== undefined) body += `<p class="meta">completeness: ${a.completeness_pct}%</p>`;
+  if (a.clarify) body += `<p>${a.clarify}</p>`;
+  body += `<ul class="reasons">${reasons}</ul>`;
+  body += rowsTable(a.columns, a.rows);
+  body += diagnoseBlock(a.diagnose);
+  if (a.cache_tier) body += `<p class="meta">served from cache: ${a.cache_tier}</p>`;
+
+  if (a.sql) {
+    body += `<pre class="sql" id="sql-block">${a.sql}\n-- params: ${JSON.stringify(a.params)}</pre>`;
+  }
+
+  body += `<div class="actions">`;
+  if (a.sql) body += `<button id="reveal">Reveal SQL</button>`;
+  body += `<button id="export">Export</button>`;
+  body += `<button id="copy">Copy answer</button>`;
+  body += `<button id="flag">Grade looks wrong</button>`;
+  body += `</div>`;
+
+  if (a.grade === "CERTIFIED") {
+    body += `<div class="nudge"><span>Did this change what you did?</span><span>
+      <button id="changed-yes">Yes</button> <button id="changed-no">No</button></span></div>`;
+  }
+
+  card.innerHTML = body;
+
+  const revealBtn = document.getElementById("reveal");
+  if (revealBtn) revealBtn.onclick = () => {
+    const block = document.getElementById("sql-block");
+    block.style.display = block.style.display === "block" ? "none" : "block";
+    fireEvent("reveal_sql");
+  };
+  document.getElementById("export").onclick = () => {
+    const blob = new Blob([JSON.stringify(a, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${a.answer_id}.json`;
+    link.click();
+    fireEvent("export_csv");
+  };
+  document.getElementById("copy").onclick = () => {
+    navigator.clipboard.writeText(JSON.stringify(a, null, 2));
+    fireEvent("copy_answer");
+  };
+  document.getElementById("flag").onclick = (e) => {
+    e.target.classList.add("flagged");
+    e.target.textContent = "Flagged";
+    fireEvent("flag_incorrect_grade");
+  };
+  const yes = document.getElementById("changed-yes");
+  if (yes) yes.onclick = () => fireEvent("changed_what_i_did", { answer: "yes" });
+  const no = document.getElementById("changed-no");
+  if (no) no.onclick = () => fireEvent("changed_what_i_did", { answer: "no" });
+  if (a.clarify) fireEvent("answered_clarify");
+}
+
+async function ask() {
+  const question = document.getElementById("question").value.trim();
+  if (!question) return;
+  const session_token = document.getElementById("client").value;
+  const card = document.getElementById("card");
+  card.innerHTML = `<p class="empty">Asking...</p>`;
+  const res = await fetch("/ask", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question, session_token }),
+  });
+  const data = await res.json();
+  render(data);
+}
+
+document.getElementById("ask").onclick = ask;
+document.getElementById("question").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") ask();
+});
+</script>
+</body>
+</html>
