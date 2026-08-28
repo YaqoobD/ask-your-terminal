@@ -27,33 +27,49 @@ prints cleanly to two A4 pages.
 
 ## Running it
 
-*Not yet buildable, because the build is in progress. This section is filled in as phases
-land.*
-
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-make seed          # generate the synthetic terminal warehouse
-make evals         # run the five-layer eval harness
-make demo          # seed, serve, open the answer card
+source .venv/bin/activate
 ```
 
-Runs on any laptop. No cloud account required. A local open-source model path is included
-for anyone without Claude API access, documented as reproducibility mode with expected
-quality degradation.
+Set a provider before running anything that calls the model. Create a `.env` file (not
+committed, see `.gitignore`):
+
+```bash
+export ASK_PROVIDER="claude"
+export ANTHROPIC_API_KEY="sk-ant-..."
+```
+
+Or, for AWS Bedrock in the EU region instead of the direct API:
+
+```bash
+export ASK_PROVIDER="bedrock"
+export AWS_REGION="eu-central-1"
+export ASK_BEDROCK_INTENT_MODEL="eu.anthropic.claude-opus-5"
+export ASK_BEDROCK_NARRATE_MODEL="eu.anthropic.claude-sonnet-5"
+```
+
+Then:
+
+```bash
+source .env
+make seed          # generate the synthetic terminal warehouse
+make evals         # run the five-layer eval harness
+make demo          # seed if needed, serve, open the browser
+```
+
+`make demo` opens a chat-style UI at `http://127.0.0.1:8000` with five example questions,
+one per trust grade plus a diagnose case, taken straight from `evals/gold_intents.jsonl`
+and `evals/traps.jsonl`.
+
+Runs on any laptop. No cloud account required beyond a model provider. A local open-source
+model path via Ollama is included for anyone without API access, documented as
+reproducibility mode with expected quality degradation.
 
 ## Status
 
-| Phase | | |
-|---|---|---|
-| 1 | Scaffold + synthetic terminal data | not started |
-| 2 | Metric registry + TMDL parser | not started |
-| 3 | Intent schema + SQL compiler | not started |
-| 4 | Provider layer + intent extraction | not started |
-| 5 | Diagnose engine | not started |
-| 6 | Grading, refusal, cache, telemetry | not started |
-| 7 | Eval harness | not started |
-| 8 | API + answer-card UI | not started |
-| 9 | Docs + rehearsal | not started |
+All 8 build phases are complete and merged; phase 9 (deck, clip, rehearsal) is in progress.
+Full test suite: `pytest tests`, 103 passed. `make evals`: layers 1 to 4 green.
 
 ## Models
 
@@ -72,3 +88,10 @@ quality degradation.
 - The Power BI TMDL sync is parsed from a **sample export**, because Power BI Desktop is
   Windows-only and this was built on macOS. The parser is real; the tenant connection is
   not demonstrated. That is a laptop limitation, not an architectural one.
+- Relative time windows ("yesterday", "last month") resolve against real wall-clock time,
+  with no pinned-`now` path threaded through the compiler yet. The synthetic dataset's last
+  real week is months in the past, so a relative-time question returns an empty window
+  today; the demo's example questions use `week N` phrasing instead, which is deterministic.
+  Known, not fixed.
+- The per-client cost cap mentioned in `SOLUTION_BRIEF.html` is a stated goal, not built:
+  cost is logged per answer with real token counts and dollars, capping is a next step.
