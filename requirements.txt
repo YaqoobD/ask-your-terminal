@@ -4,5 +4,6 @@ fastapi
 uvicorn
 pyyaml
 anthropic
+boto3
 pytest
 httpx

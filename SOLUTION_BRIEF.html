@@ -258,12 +258,17 @@ footer b{color:var(--dark)}
       <h2>Security, raised unprompted</h2>
       <ul>
         <li><strong>Tenant from the authenticated session</strong>, never from the question.
-          Asking for another terminal is a refusal, not a permission check that might pass</li>
+          The query form has no field a tenant could occupy; the compiler takes the client's
+          identity as a required argument, not a value the model could set. Asking for
+          another terminal is a refusal, not a permission check that might pass</li>
         <li><strong>Row-level security inherited</strong> from the existing Power BI model,
           not rebuilt</li>
         <li>Registry and intent are instructions; <strong>data values are evidence,
           never instructions</strong>, because vessel names and berth remarks are
-          attacker-controlled text</li>
+          attacker-controlled text. A sanitizer screens every question before any model
+          call and blocks known injection patterns outright, at zero cost because a
+          blocked question never reaches the model. The exact planted injection string is
+          blocked in testing, proven with a test that counts model calls, not assumed</li>
         <li>EU-region endpoints, no training, no retention; a local open-source path for
           clients who will not use a US vendor</li>
         <li>Cross-tenant probes are <strong>regression tests</strong>, not assurances</li>
