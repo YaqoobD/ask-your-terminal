@@ -68,6 +68,21 @@ def build_prompt(question: str, registry) -> str:
     )
 
 
+def _stringify_filters(intent_dict: dict) -> None:
+    """QueryIntent.filters is dict[str, str], but a boolean dimension like
+    is_reefer naturally comes back from the model as a JSON bool. Normalise
+    at the extraction boundary rather than trusting every response to quote it.
+    """
+    filters = intent_dict.get("filters")
+    if not isinstance(filters, dict):
+        return
+    for key, value in filters.items():
+        if isinstance(value, bool):
+            filters[key] = "true" if value else "false"
+        elif not isinstance(value, str):
+            filters[key] = str(value)
+
+
 def _parse_response(raw: str) -> dict:
     match = _JSON_BLOB.search(raw)
     if not match:
@@ -94,6 +109,7 @@ def extract(question: str, registry, *, provider: Provider | None = None) -> Ext
     if "intent" not in parsed:
         raise ExtractError(f"provider response had neither 'intent' nor 'clarify': {parsed!r}")
 
+    _stringify_filters(parsed["intent"])
     try:
         intent = QueryIntent(**parsed["intent"])
     except ValidationError as exc:

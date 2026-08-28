@@ -20,6 +20,16 @@ class Provider(Protocol):
     def complete(self, *, system: str, user: str) -> str: ...
 
 
+def _first_text_block(response) -> str:
+    """Some models (Sonnet 5 with extended thinking) put a ThinkingBlock
+    ahead of the TextBlock, so the text is never reliably content[0].
+    """
+    for block in response.content:
+        if block.type == "text":
+            return block.text
+    raise ValueError(f"no text block in response content: {response.content!r}")
+
+
 class ClaudeProvider:
     def __init__(self, model: str):
         self.model = model
@@ -34,7 +44,7 @@ class ClaudeProvider:
             system=system,
             messages=[{"role": "user", "content": user}],
         )
-        return response.content[0].text
+        return _first_text_block(response)
 
 
 class BedrockProvider:
@@ -58,7 +68,7 @@ class BedrockProvider:
             system=system,
             messages=[{"role": "user", "content": user}],
         )
-        return response.content[0].text
+        return _first_text_block(response)
 
 
 class OllamaProvider:
