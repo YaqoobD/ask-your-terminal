@@ -4,11 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ask Your Terminal</title>
-<link rel="stylesheet" href="/static/app.css?v=10">
+<link rel="stylesheet" href="/static/app.css?v=13">
 </head>
 <body>
 <header>
-  <h1>Ask Your Terminal</h1>
+  <div style="display:flex;align-items:center;gap:14px;">
+    <h1><span class="logo-dot"></span>Ask Your Terminal</h1>
+    <a href="/admin" class="nav-link">Admin</a>
+  </div>
   <select id="client">
     <option value="demo-alpha">TOS Alpha</option>
     <option value="demo-beta">TOS Beta</option>
@@ -16,18 +19,17 @@
 </header>
 
 <div class="thread" id="thread">
-  <div class="msg-bot">Hi, I'm your terminal ops assistant. Ask me anything about your terminal's operations, in plain English.</div>
+  <div class="msg-bot">Hi, I'm your terminal ops assistant. Ask me anything about your terminal's operations.</div>
 
-  <div class="legend">
-    <p class="legend-title">Every answer comes back labeled with how much to trust it:</p>
-    <div class="legend-row is-CERTIFIED"><strong>CERTIFIED</strong> safe to act on, every check passed</div>
-    <div class="legend-row is-QUALIFIED"><strong>QUALIFIED</strong> here's the number, with a caveat named</div>
-    <div class="legend-row is-CLARIFY"><strong>CLARIFY</strong> too vague, asks you one question back</div>
-    <div class="legend-row is-REFUSE"><strong>REFUSE</strong> can't be answered from this data, says why</div>
-  </div>
-
-  <p class="examples-caption">Try one of these, the first four are built to trigger a different label above; the fifth shows a "why did this change" breakdown:</p>
+  <p class="examples-caption">Try one of these:</p>
   <div class="examples" id="examples"></div>
+</div>
+
+<div class="legend-strip">
+  <span class="is-CERTIFIED"><strong>CERTIFIED</strong> (safe to act on, every check passed)</span>
+  <span class="is-QUALIFIED"><strong>QUALIFIED</strong> (here's the number, with a caveat named)</span>
+  <span class="is-CLARIFY"><strong>CLARIFY</strong> (too vague, asks you one question back)</span>
+  <span class="is-REFUSE"><strong>REFUSE</strong> (can't be answered from this data, says why)</span>
 </div>
 
 <div class="composer">
@@ -53,7 +55,7 @@ const exampleBar = document.getElementById("examples");
 for (const ex of EXAMPLES) {
   const btn = document.createElement("button");
   btn.className = "chip";
-  btn.innerHTML = `<span class="chip-tag chip-tag-${ex.label}">${ex.label}</span>${ex.q}`;
+  btn.textContent = ex.q;
   btn.onclick = () => {
     document.getElementById("client").value = ex.client;
     document.getElementById("question").value = ex.q;
@@ -169,7 +171,7 @@ function render(a, card, expectGrade, expectIntent) {
   body += `</div>`;
 
   if (a.grade === "CERTIFIED") {
-    body += `<div class="nudge"><span>Did this change what you did?</span><span>
+    body += `<div class="nudge"><span>Will you act on this number?</span><span>
       <button class="changed-yes">Yes</button> <button class="changed-no">No</button></span></div>`;
   }
 
@@ -199,10 +201,15 @@ function render(a, card, expectGrade, expectIntent) {
     e.target.textContent = "Flagged";
     fireEvent(a.answer_id, "flag_incorrect_grade");
   };
+  const nudge = card.querySelector(".nudge");
+  const recordAnswer = (answer) => {
+    fireEvent(a.answer_id, "changed_what_i_did", { answer });
+    nudge.innerHTML = `<span>Thanks, recorded.</span>`;
+  };
   const yes = card.querySelector(".changed-yes");
-  if (yes) yes.onclick = () => fireEvent(a.answer_id, "changed_what_i_did", { answer: "yes" });
+  if (yes) yes.onclick = () => recordAnswer("yes");
   const no = card.querySelector(".changed-no");
-  if (no) no.onclick = () => fireEvent(a.answer_id, "changed_what_i_did", { answer: "no" });
+  if (no) no.onclick = () => recordAnswer("no");
   if (a.clarify) fireEvent(a.answer_id, "answered_clarify");
 }
 

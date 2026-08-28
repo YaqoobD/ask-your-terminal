@@ -8,20 +8,17 @@ prose that fails it.
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 from core.diagnose import DiagnoseResult
 from core.providers import get_provider
 
 _NUMBER_RE = re.compile(r"-?\d+(?:\.\d+)?")
+_PROMPT_PATH = Path(__file__).parent.parent / "prompts" / "narrate_v1.md"
 
-SYSTEM_PROMPT = (
-    "You narrate a diagnostic result for an operations audience. Use only the "
-    "numbers given in the evidence block below; never compute or introduce a "
-    "new number. Label every item attributed to a dimension level as a "
-    "'contributor', never as 'the cause'. Always mention the unexplained "
-    "remainder when one is reported. If the reality check flags an artefact, "
-    "say so plainly and do not present the figure as an operational change."
-)
+
+def _system_prompt() -> str:
+    return _PROMPT_PATH.read_text()
 
 
 class NarrationError(Exception):
@@ -93,6 +90,6 @@ def verify_numbers_in_evidence(narration: str, result: DiagnoseResult) -> None:
 
 def narrate(result: DiagnoseResult, *, provider=None) -> str:
     provider = provider or get_provider("narrate")
-    text = provider.complete(system=SYSTEM_PROMPT, user=_evidence_block(result))
+    text = provider.complete(system=_system_prompt(), user=_evidence_block(result))
     verify_numbers_in_evidence(text, result)
     return text

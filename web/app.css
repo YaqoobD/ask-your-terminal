@@ -52,17 +52,42 @@ body {
 }
 
 header {
-  background: var(--white);
+  background: var(--lilac);
   color: var(--ink);
-  padding: 14px 20px;
+  padding: 10px 18px;
+  margin: 14px 20px 0;
+  border-radius: 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex: 0 0 auto;
-  border-bottom: 3px solid var(--accent);
 }
 
-header h1 { margin: 0; font-size: 1.1rem; }
+header h1 { margin: 0; font-size: 1.05rem; font-weight: 800; letter-spacing: -0.01em; }
+
+.logo-dot {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, var(--accent), var(--accent-dark));
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.nav-link {
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--white);
+  text-decoration: none;
+  padding: 9px 18px;
+  border-radius: 20px;
+  border: none;
+  background: var(--ink);
+  transition: background 0.15s;
+}
+.nav-link:hover { background: var(--accent-dark); }
 
 header select {
   font-family: inherit;
@@ -100,6 +125,11 @@ header select {
   border-bottom-left-radius: 4px;
 }
 
+.msg-bot:not(.card) {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
 .msg-user {
   background: var(--accent);
   color: var(--white);
@@ -116,41 +146,25 @@ header select {
   box-shadow: 0 2px 10px rgba(16, 5, 47, 0.06);
 }
 
-.legend {
-  background: var(--white);
-  border-radius: 10px;
-  padding: 16px 20px;
-  align-self: flex-start;
-  max-width: 100%;
-  box-shadow: 0 2px 10px rgba(16, 5, 47, 0.06);
-}
-.legend-title { margin: 0 0 10px; font-size: 0.85rem; font-weight: 600; }
-.legend-row {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  font-size: 0.85rem;
-  margin: 8px 0;
-  padding-left: 12px;
-  border-left: 3px solid transparent;
-}
-.legend-row strong {
+.legend-strip {
   flex: 0 0 auto;
-  min-width: 78px;
-  font-weight: 800;
-  font-size: 0.75rem;
-  letter-spacing: 0.03em;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  padding: 0 20px;
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+  font-size: 0.72rem;
+  color: var(--g3);
 }
-.legend-row.is-CERTIFIED { border-left-color: var(--certified); }
-.legend-row.is-CERTIFIED strong { color: var(--certified); }
-.legend-row.is-QUALIFIED { border-left-color: var(--qualified); }
-.legend-row.is-QUALIFIED strong { color: var(--qualified); }
-.legend-row.is-CLARIFY { border-left-color: var(--clarify); }
-.legend-row.is-CLARIFY strong { color: var(--clarify); }
-.legend-row.is-REFUSE { border-left-color: var(--refuse); }
-.legend-row.is-REFUSE strong { color: var(--refuse); }
+.legend-strip strong { font-weight: 800; letter-spacing: 0.02em; margin-right: 3px; }
+.legend-strip .is-CERTIFIED strong { color: var(--certified); }
+.legend-strip .is-QUALIFIED strong { color: var(--qualified); }
+.legend-strip .is-CLARIFY strong { color: var(--clarify); }
+.legend-strip .is-REFUSE strong { color: var(--refuse); }
 
-.examples-caption { font-size: 0.8rem; color: var(--g3); margin: 0; align-self: flex-start; }
+.examples-caption { font-size: 0.68rem; color: var(--g3); margin: 0; align-self: flex-start; }
 .examples { display: flex; flex-wrap: wrap; gap: 8px; align-self: flex-start; max-width: 90%; }
 .chip {
   background: var(--white);
@@ -166,30 +180,6 @@ header select {
   transition: border-color 0.15s, background 0.15s;
 }
 .chip:hover { border-color: var(--accent); background: var(--paper); }
-
-.chip-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--g3);
-  margin-right: 8px;
-}
-.chip-tag::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex: 0 0 auto;
-}
-.chip-tag-Certified::before { background: var(--certified); }
-.chip-tag-Qualified::before { background: var(--qualified); }
-.chip-tag-Clarify::before { background: var(--clarify); }
-.chip-tag-Refuse::before { background: var(--refuse); }
-.chip-tag-Diagnose::before { background: var(--ink); }
 
 .composer {
   flex: 0 0 auto;
@@ -216,13 +206,15 @@ header select {
   height: 44px;
   border-radius: 50%;
   border: none;
-  background: var(--accent);
+  background: var(--ink);
   color: var(--white);
   font-size: 1.1rem;
   font-weight: 800;
   cursor: pointer;
   flex: 0 0 auto;
+  transition: background 0.15s;
 }
+.composer button:hover { background: var(--accent-dark); }
 
 .badge {
   display: inline-block;
@@ -230,7 +222,7 @@ header select {
   font-weight: 700;
   letter-spacing: 0.04em;
   padding: 4px 12px;
-  border-radius: 10px;
+  border-radius: 20px;
 }
 .badge-CERTIFIED { background: var(--certified-bg); color: var(--certified); }
 .badge-QUALIFIED { background: var(--qualified-bg); color: var(--qualified); }
@@ -269,37 +261,46 @@ pre.sql {
 
 .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 .actions button {
-  background: var(--paper);
-  color: var(--ink);
-  border: 1px solid #c6c9de;
-  padding: 10px 14px;
+  background: var(--ink);
+  color: var(--white);
+  border: none;
+  padding: 10px 16px;
   min-height: 40px;
   font-size: 0.8rem;
-  border-radius: 6px;
-  font-weight: 600;
+  border-radius: 20px;
+  font-weight: 700;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition: background 0.15s;
 }
-.actions button:hover { border-color: var(--accent); }
-.actions button.flagged { background: var(--refuse); color: var(--white); border-color: var(--refuse); }
+.actions button:hover { background: var(--accent-dark); }
+.actions button.flagged { background: var(--refuse); color: var(--white); }
 
 .nudge {
   margin-top: 14px;
   padding: 10px 14px;
-  background: var(--paper);
-  border-radius: 6px;
-  font-size: 0.85rem;
+  background: var(--lilac);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 .nudge button {
-  border-radius: 6px;
-  border: 1px solid #c6c9de;
-  background: var(--white);
-  padding: 4px 10px;
+  border-radius: 16px;
+  border: none;
+  background: var(--accent);
+  color: var(--white);
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 6px 14px;
+  min-height: 32px;
   cursor: pointer;
 }
+.nudge button:hover { background: var(--accent-dark); }
 
 .narration { margin-top: 12px; font-size: 0.9rem; line-height: 1.5; }
 

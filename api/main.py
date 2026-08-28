@@ -9,6 +9,7 @@ records through core.telemetry, unchanged. GET /health is a liveness probe.
 
 from __future__ import annotations
 
+import os
 import time
 import uuid
 from datetime import datetime, timedelta
@@ -26,8 +27,8 @@ from core.diagnose import diagnose
 from core.extract import extract
 from core.grade import Grade, GradeInputs, Refusal, grade
 from core.narrate import NarrationError, narrate
-from core.providers import estimate_cost_usd, get_provider
-from core.telemetry import record_answer, record_interaction
+from core.providers import INTENT_MODEL, NARRATE_MODEL, PRICING_USD_PER_MTOK, estimate_cost_usd, get_provider
+from core.telemetry import admin_snapshot, record_answer, record_interaction, summarize
 from core.tenancy import Session, UnknownSessionError, log_cross_tenant_attempt, resolve_tenant
 from core.timewindow import TimeWindowError, resolve_time_window
 from registry.load import DB_PATH, resolve
@@ -35,6 +36,8 @@ from registry.load import DB_PATH, resolve
 ROOT = Path(__file__).parent.parent
 WEB_DIR = ROOT / "web"
 RUNS_PATH = ROOT / "runs.jsonl"
+PROMPTS_DIR = ROOT / "prompts"
+PROMPT_FILES = {"intent_v1": "intent_v1.md", "narrate_v1": "narrate_v1.md"}
 
 # The synthetic dataset ends 2026-06-26 (data/generate.py). Pinning "now" just
 # past the dataset's last week keeps freshness and correction-window grading
@@ -63,6 +66,10 @@ class EventRequest(BaseModel):
     answer_id: str
     interaction_kind: str
     extra: dict = {}
+
+
+class PromptUpdateRequest(BaseModel):
+    content: str
 
 
 @app.get("/health")
@@ -235,9 +242,67 @@ def event(req: EventRequest) -> dict:
     return record_interaction(RUNS_PATH, answer_id=req.answer_id, interaction_kind=req.interaction_kind, **req.extra)
 
 
+PROMPT_NOTES = {
+    "intent_v1": (
+        "This is the exact text sent to the intent model, filled in at request time. "
+        "Keep {metrics_block}, {dimension_names} and {question} exactly as written; "
+        "they get substituted with the live registry and the user's question before "
+        "each call. Edit the instructions around them freely."
+    ),
+    "narrate_v1": (
+        "This is the system prompt sent to the narration model alongside the evidence "
+        "block for a diagnose answer. It has no placeholders; edit it directly."
+    ),
+}
+
+
+@app.get("/admin/prompts")
+def admin_prompts() -> dict:
+    return {
+        name: {"content": (PROMPTS_DIR / filename).read_text(), "note": PROMPT_NOTES.get(name, "")}
+        for name, filename in PROMPT_FILES.items()
+    }
+
+
+@app.put("/admin/prompts/{name}")
+def admin_update_prompt(name: str, req: PromptUpdateRequest) -> dict:
+    if name not in PROMPT_FILES:
+        raise HTTPException(status_code=404, detail=f"unknown prompt {name!r}")
+    (PROMPTS_DIR / PROMPT_FILES[name]).write_text(req.content)
+    return {"status": "saved", "name": name}
+
+
+@app.get("/admin/summary")
+def admin_summary() -> dict:
+    """Operator view over the same runs.jsonl the app writes: which models
+    and prompt version are live, what answers have cost and taken so far,
+    and the last eval gate result. Read-only, no auth beyond this being an
+    internal route not linked from the tenant-facing session flow.
+    """
+    backend = os.environ.get("ASK_PROVIDER", "claude")
+    eval_report_path = ROOT / "evals" / "report.md"
+    return {
+        "provider": {
+            "backend": backend,
+            "intent_model": INTENT_MODEL,
+            "narrate_model": NARRATE_MODEL,
+            "pricing_usd_per_mtok": PRICING_USD_PER_MTOK,
+            "prompt_version": "intent_v1",
+        },
+        "utility": summarize(RUNS_PATH),
+        "operations": admin_snapshot(RUNS_PATH),
+        "eval_report": eval_report_path.read_text() if eval_report_path.exists() else None,
+    }
+
+
 app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
 
 
 @app.get("/")
 def index() -> FileResponse:
     return FileResponse(WEB_DIR / "index.html")
+
+
+@app.get("/admin")
+def admin_page() -> FileResponse:
+    return FileResponse(WEB_DIR / "admin.html")
