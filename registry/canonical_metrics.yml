@@ -1,0 +1,115 @@
+# Canonical metric semantics. One definition per metric, shared by every client.
+# Client mapping files may only override which physical table/column feeds a
+# signal (registry/clients/*.yml: column_overrides); they can never redefine a
+# numerator, a denominator, or a definition. That is the governance boundary
+# this registry exists to enforce.
+#
+# signals: reusable numerator/denominator building blocks referenced by name
+# from metrics below. `table` is the base relation; `expr` is the governed SQL
+# evaluated per row before `agg` is applied. The full compiled query (joins,
+# soft-delete exclusion, as-of pinning, the tenant predicate) is Phase 3's
+# job; this file only fixes what each signal means and where it comes from.
+signals:
+  dwell_hours_sum:
+    table: container_events
+    expr: "date_diff('hour', gate_in, gate_out)"
+    agg: sum
+    soft_delete_flag: deleted
+  container_count:
+    table: container_events
+    expr: container_id
+    agg: count
+    soft_delete_flag: deleted
+  downtime_hours_sum:
+    table: equipment_downtime
+    expr: duration_hours
+    agg: sum
+  equipment_count:
+    table: equipment_downtime
+    expr: equipment_id
+    agg: count_distinct
+  crane_move_count:
+    table: crane_moves
+    expr: move_id
+    agg: count
+  gate_turnaround_hours_sum:
+    table: gate_moves
+    expr: >-
+      date_diff('hour',
+        (select g_in.event_time from gate_moves g_in
+         where g_in.container_id = gate_moves.container_id and g_in.direction = 'in'),
+        (select g_out.event_time from gate_moves g_out
+         where g_out.container_id = gate_moves.container_id and g_out.direction = 'out')
+      )
+    agg: sum
+    filter: "direction = 'out'"
+  gate_event_count:
+    table: gate_moves
+    expr: container_id
+    agg: count_distinct
+    filter: "direction = 'out'"
+  window_hours:
+    # Virtual: the calendar hours in the query's time_window, supplied by the
+    # Phase 3 compiler from time_window, not read off any table.
+    virtual: true
+
+metrics:
+  dwell_time:
+    name: "Container dwell time"
+    definition: "Average hours a container spends between gate-in and gate-out."
+    numerator: dwell_hours_sum
+    denominator: container_count
+    allowed_grains: [day, week, month]
+    allowed_dimensions: [terminal, is_reefer, berth]
+    freshness_sla_hours: 24
+    cacheable: true
+    owner: ops-analytics
+    contribution_dimensions: [terminal, is_reefer]
+
+  crane_idle_pct:
+    name: "Crane idle percentage"
+    definition: "Share of crane-hours lost to recorded equipment downtime."
+    numerator: downtime_hours_sum
+    denominator: equipment_count
+    allowed_grains: [day, week, month]
+    allowed_dimensions: [terminal, equipment_type]
+    freshness_sla_hours: 24
+    cacheable: true
+    owner: ops-analytics
+    contribution_dimensions: [terminal, equipment_type]
+
+  moves_per_hr:
+    name: "Crane moves per hour"
+    definition: "Crane moves completed per hour of the query window."
+    numerator: crane_move_count
+    denominator: window_hours
+    allowed_grains: [day, week, month]
+    allowed_dimensions: [terminal, berth]
+    freshness_sla_hours: 12
+    cacheable: true
+    owner: ops-analytics
+    contribution_dimensions: [terminal, berth]
+
+  berth_productivity:
+    name: "Berth productivity"
+    definition: "Crane moves completed per hour of the query window, by berth."
+    numerator: crane_move_count
+    denominator: window_hours
+    allowed_grains: [day, week, month]
+    allowed_dimensions: [terminal, berth]
+    freshness_sla_hours: 12
+    cacheable: true
+    owner: ops-analytics
+    contribution_dimensions: [terminal, berth]
+
+  gate_turnaround:
+    name: "Gate turnaround time"
+    definition: "Average hours between a container's gate-in and gate-out move."
+    numerator: gate_turnaround_hours_sum
+    denominator: gate_event_count
+    allowed_grains: [day, week, month]
+    allowed_dimensions: [terminal]
+    freshness_sla_hours: 24
+    cacheable: true
+    owner: ops-analytics
+    contribution_dimensions: [terminal]

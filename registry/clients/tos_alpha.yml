@@ -1,0 +1,19 @@
+# Client mapping for TOS Alpha. Maps the canonical registry onto terminal_a's
+# slice of the warehouse. May only override table/column and declare which
+# signals this client's contract covers; it cannot redefine a metric.
+client_id: tos_alpha
+terminal: terminal_a
+timezone_offset_hours: 0
+berth_alias_prefix: "B"
+
+soft_delete_columns:
+  vessel_calls: deleted
+  container_events: deleted
+
+# Bare table/column overrides only. Empty here because terminal_a uses the
+# canonical signal tables and columns as-is.
+column_overrides: {}
+
+declared_signals:
+  - downtime_hours_sum
+  - gate_turnaround_hours_sum

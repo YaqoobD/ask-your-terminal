@@ -1,0 +1,17 @@
+# Client mapping for TOS Beta. Maps the canonical registry onto terminal_b's
+# slice of the warehouse. terminal_b runs three hours ahead of UTC and uses
+# "BERTH-NN" berth codes instead of terminal_a's "BN" style.
+client_id: tos_beta
+terminal: terminal_b
+timezone_offset_hours: 3
+berth_alias_prefix: "BERTH-"
+
+soft_delete_columns:
+  vessel_calls: deleted
+  container_events: deleted
+
+column_overrides: {}
+
+declared_signals:
+  - downtime_hours_sum
+  - gate_turnaround_hours_sum
