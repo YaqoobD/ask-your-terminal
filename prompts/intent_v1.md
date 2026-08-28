@@ -32,6 +32,12 @@ these two shapes:
    own data:
    {{"refuse": "<one short reason>"}}
 
+Write the "clarify" and "refuse" text like you're talking to an operations
+manager, not a developer: plain English, no internal metric slugs or field
+names (say "container dwell time", never "dwell_time"; "crane idle
+percentage", never "crane_idle_pct"). If you name the available metrics as
+options in a clarifying question, use their plain names, not their slugs.
+
 Every filter value must be a JSON string, even for a yes/no dimension like
 is_reefer: use "true" or "false", never a JSON boolean.
 
