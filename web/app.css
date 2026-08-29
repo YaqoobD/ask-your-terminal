@@ -99,6 +99,12 @@ header select {
   color: var(--ink);
 }
 
+.client-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
 .thread {
   flex: 1 1 auto;
   overflow-y: auto;
