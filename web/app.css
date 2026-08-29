@@ -144,6 +144,15 @@ header select {
   font-weight: 600;
 }
 
+.client-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
 .msg-bot.card {
   background: var(--white);
   color: var(--ink);

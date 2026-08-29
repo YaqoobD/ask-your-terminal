@@ -233,10 +233,12 @@ async function ask(expectGrade, expectIntent) {
   const questionInput = document.getElementById("question");
   const question = questionInput.value.trim();
   if (!question) return;
-  const session_token = document.getElementById("client").value;
+  const clientSelect = document.getElementById("client");
+  const session_token = clientSelect.value;
+  const clientLabel = clientSelect.selectedOptions[0].text;
   questionInput.value = "";
 
-  addBubble("msg-user", question);
+  addBubble("msg-user", `<div class="client-tag">${escapeHtml(clientLabel)}</div>${escapeHtml(question)}`);
   const card = addBubble("msg-bot card", `<p class="empty">Asking...</p>`);
 
   const res = await fetch("/ask", {
