@@ -22,7 +22,7 @@ from core.diagnose import diagnose
 from core.extract import extract
 from core.grade import Grade, GradeInputs, Refusal, grade
 from core.intent import QueryIntent
-from core.narrate import _evidence_block, narrate
+from core.narrate import NarrationError, _evidence_block, narrate
 from core.providers import get_provider
 from core.timewindow import TimeWindowError, resolve_time_window
 from registry.load import DB_PATH, resolve
@@ -203,7 +203,11 @@ def run_layer5_narration() -> LayerResult:
     registry = resolve("tos_beta")
     intent = QueryIntent(op="diagnose", metric="dwell_time", time_window="week 5")
     result = diagnose(intent, tenant_id="tos_beta", registry=registry)
-    text = narrate(result)
+    try:
+        text = narrate(result)
+    except NarrationError as exc:
+        layer.cases.append(CaseResult("week 5 spike narration", False, f"narration rejected: {exc}"))
+        return layer
     judge = get_provider("narrate")
     raw = judge.complete(
         system=JUDGE_SYSTEM,
