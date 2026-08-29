@@ -99,6 +99,12 @@ header select {
   color: var(--ink);
 }
 
+.client-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
 .thread {
   flex: 1 1 auto;
   overflow-y: auto;
@@ -136,6 +142,15 @@ header select {
   align-self: flex-end;
   border-bottom-right-radius: 4px;
   font-weight: 600;
+}
+
+.client-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.8;
+  margin-bottom: 4px;
 }
 
 .msg-bot.card {

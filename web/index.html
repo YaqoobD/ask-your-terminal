@@ -12,14 +12,19 @@
     <h1><span class="logo-dot"></span>Ask Your Terminal</h1>
     <a href="/admin" class="nav-link">Admin</a>
   </div>
-  <select id="client">
-    <option value="demo-alpha">TOS Alpha</option>
-    <option value="demo-beta">TOS Beta</option>
-  </select>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <label for="client" class="client-label">Client:</label>
+    <select id="client">
+      <option value="demo-alpha">Nordhaven Terminals</option>
+      <option value="demo-beta">Bayport Terminals</option>
+    </select>
+  </div>
 </header>
 
 <div class="thread" id="thread">
-  <div class="msg-bot">Hi, I'm your terminal ops assistant. Ask me anything about your terminal's operations.</div>
+  <div class="msg-bot">Hi, I'm your terminal ops assistant. This demo has two separate client
+    terminals, Nordhaven and Bayport, and each one only ever sees its own data. Switch clients
+    at the top right, then ask anything about that terminal's operations.</div>
 
   <p class="examples-caption">Try one of these:</p>
   <div class="examples" id="examples"></div>
@@ -127,10 +132,12 @@ function diagnoseBlock(d) {
   return html;
 }
 
-function render(a, card, expectGrade, expectIntent) {
+function render(a, card, expectGrade, expectIntent, clientLabel) {
   const reasons = (a.reasons || []).map(r => `<li>${r}</li>`).join("");
 
-  let body = `<span class="badge badge-${a.grade}">${a.grade}</span>`;
+  let body = "";
+  if (clientLabel) body += `<div class="client-tag">${escapeHtml(clientLabel)}</div>`;
+  body += `<span class="badge badge-${a.grade}">${a.grade}</span>`;
   if (expectGrade) {
     const pass = a.grade === expectGrade;
     body += `<div class="eval-check ${pass ? "eval-pass" : "eval-fail"}">
@@ -228,10 +235,12 @@ async function ask(expectGrade, expectIntent) {
   const questionInput = document.getElementById("question");
   const question = questionInput.value.trim();
   if (!question) return;
-  const session_token = document.getElementById("client").value;
+  const clientSelect = document.getElementById("client");
+  const session_token = clientSelect.value;
+  const clientLabel = clientSelect.selectedOptions[0].text;
   questionInput.value = "";
 
-  addBubble("msg-user", question);
+  addBubble("msg-user", `<div class="client-tag">${escapeHtml(clientLabel)}</div>${escapeHtml(question)}`);
   const card = addBubble("msg-bot card", `<p class="empty">Asking...</p>`);
 
   const res = await fetch("/ask", {
@@ -240,7 +249,7 @@ async function ask(expectGrade, expectIntent) {
     body: JSON.stringify({ question, session_token }),
   });
   const data = await res.json();
-  render(data, card, expectGrade, expectIntent);
+  render(data, card, expectGrade, expectIntent, clientLabel);
 }
 
 document.getElementById("ask").onclick = () => ask();
