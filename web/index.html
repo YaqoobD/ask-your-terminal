@@ -132,10 +132,12 @@ function diagnoseBlock(d) {
   return html;
 }
 
-function render(a, card, expectGrade, expectIntent) {
+function render(a, card, expectGrade, expectIntent, clientLabel) {
   const reasons = (a.reasons || []).map(r => `<li>${r}</li>`).join("");
 
-  let body = `<span class="badge badge-${a.grade}">${a.grade}</span>`;
+  let body = "";
+  if (clientLabel) body += `<div class="client-tag">${escapeHtml(clientLabel)}</div>`;
+  body += `<span class="badge badge-${a.grade}">${a.grade}</span>`;
   if (expectGrade) {
     const pass = a.grade === expectGrade;
     body += `<div class="eval-check ${pass ? "eval-pass" : "eval-fail"}">
@@ -247,7 +249,7 @@ async function ask(expectGrade, expectIntent) {
     body: JSON.stringify({ question, session_token }),
   });
   const data = await res.json();
-  render(data, card, expectGrade, expectIntent);
+  render(data, card, expectGrade, expectIntent, clientLabel);
 }
 
 document.getElementById("ask").onclick = () => ask();
