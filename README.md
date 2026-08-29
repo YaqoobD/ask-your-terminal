@@ -40,14 +40,6 @@ export ASK_PROVIDER="claude"
 export ANTHROPIC_API_KEY="sk-ant-..."
 ```
 
-Or, for AWS Bedrock in the EU region instead of the direct API:
-
-```bash
-export ASK_PROVIDER="bedrock"
-export AWS_REGION="eu-central-1"
-export ASK_BEDROCK_INTENT_MODEL="eu.anthropic.claude-opus-5"
-export ASK_BEDROCK_NARRATE_MODEL="eu.anthropic.claude-sonnet-5"
-```
 
 Then:
 
